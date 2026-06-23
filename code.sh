@@ -16,12 +16,11 @@ NC='\033[0m'
 show_banner() {
     clear
     echo -e "${CYAN}"
-    echo " ████████╗███████╗██████╗ ███╗   ███╗███████╗ ██████╗     ██████╗ ██████╗ ███████╗ █████╗ ██╗  ██╗ ██████╗ ██╗   ██╗████████╗"
-    echo " ╚══██╔══╝██╔════╝██╔══██╗████╗ ████║██╔════╝██╔═══██╗    ██╔══██╗██╔══██╗██╔════╝██╔══██╗██║ ██╔╝██╔═══██╗██║   ██║╚══██╔══╝"
-    echo "    ██║   █████╗  ██████╔╝██╔████╔██║█████╗  ██║   ██║    ██████╔╝██████╔╝█████╗  ███████║█████╔╝ ██║   ██║██║   ██║   ██║   "
-    echo "    ██║   ██╔══╝  ██╔══██╗██║╚██╔╝██║██╔══╝  ██║   ██║    ██╔══██╗██╔══██╗██╔══╝  ██╔══██║██╔═██╗ ██║   ██║██║   ██║   ██║   "
-    echo "    ██║   ███████╗██║  ██║██║ ╚═╝ ██║███████╗╚██████╔╝    ██████╔╝██║  ██║███████╗██║  ██║██║  ██╗╚██████╔╝╚██████╔╝   ██║   "
-    echo "    ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝ ╚═════╝     ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝    ╚═╝   "
+    echo -e "${CYAN}████████╗░█████╗░░██████╗██╗███╗░░██╗${NC}"
+    echo -e "${BLUE}░░░██║░░░███████║╚█████╗░██║██╔██╗██║${NC}"
+    echo -e "${MAGENTA}░░░██║░░░██╔══██║░╚═══██╗██║██║╚████║${NC}"
+    echo -e "${MAGENTA}░░░██║░░░██║░░██║██████╔╝██║██║░╚███║${NC}"
+    echo -e "${RED}░░░╚═╝░░░╚═╝░░╚═╝╚═════╝░╚═╝╚═╝░░╚══╝${NC}"
     echo -e "${NC}"
     echo -e "${BOLD}${GREEN}╔═══════════════════════════════════════════════════════════╗${NC}"
     echo -e "${BOLD}${GREEN}║${NC}     ${BOLD}${YELLOW}Welcome to iTzTasin69 VsCode VPS MAKER${NC}              ${BOLD}${GREEN}║${NC}"
@@ -36,17 +35,25 @@ count_containers() {
 
 # List containers
 list_containers() {
-    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║${NC}              ${BOLD}Your VsCode Containers${NC}                          ${CYAN}║${NC}"
-    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${NC}                         ${BOLD}Your VsCode Containers${NC}                               ${CYAN}║${NC}"
+    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}║${NC}  ${DIM}#    Name            Hostname         Status       Port${NC}                   ${CYAN}║${NC}"
+    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════════════════════════╣${NC}"
     
     local containers=$(docker ps -a --filter "ancestor=ghcr.io/coder/code-server:latest" --format "{{.Names}}|{{.Status}}|{{.Ports}}" 2>/dev/null)
     
     if [ -z "$containers" ]; then
-        echo -e "${CYAN}║${NC}  ${RED}No containers found!${NC}                                     ${CYAN}║${NC}"
+        echo -e "${CYAN}║${NC}  ${RED}No containers found!${NC}                                                                  ${CYAN}║${NC}"
     else
         local num=1
         while IFS='|' read -r name status ports; do
+            # Get hostname
+            local hostname=$(docker inspect -f '{{.Config.Hostname}}' "$name" 2>/dev/null)
+            if [ -z "$hostname" ]; then
+                hostname="N/A"
+            fi
+            
             # Extract port
             local port=$(echo "$ports" | grep -oP '0.0.0.0:\K[0-9]+' | head -1)
             if [ -z "$port" ]; then
@@ -58,23 +65,23 @@ list_containers() {
             local status_text="STOPPED"
             if echo "$status" | grep -q "Up"; then
                 status_color="$GREEN"
-                status_text="RUNNING "
+                status_text="RUNNING"
             fi
             
-            printf "${CYAN}║${NC} ${BOLD}%2d${NC}. ${YELLOW}%-15s${NC} ${status_color}[%s]${NC} Port: ${MAGENTA}%-6s${NC}  ${CYAN}║${NC}\n" "$num" "$name" "$status_text" "$port"
+            printf "${CYAN}║${NC} ${BOLD}%2d${NC}   ${YELLOW}%-15s${NC}  ${BLUE}%-15s${NC}  ${status_color}%-10s${NC}  ${MAGENTA}%-6s${NC}   ${CYAN}║${NC}\n" "$num" "$name" "$hostname" "$status_text" "$port"
             num=$((num + 1))
         done <<< "$containers"
     fi
     
-    echo -e "${CYAN}╚═══════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
 }
 
 # Install container
 install_container() {
-    echo -e "${BOLD}${YELLOW}════════════════════════════════════════${NC}"
-    echo -e "${BOLD}${GREEN}      🚀 CREATE NEW VSCODE VPS${NC}"
-    echo -e "${BOLD}${YELLOW}════════════════════════════════════════${NC}"
+    echo -e "${BOLD}${YELLOW}══════════════════════════════════════════════════════${NC}"
+    echo -e "${BOLD}${GREEN}              🚀 CREATE NEW VSCODE VPS${NC}"
+    echo -e "${BOLD}${YELLOW}══════════════════════════════════════════════════════${NC}"
     echo ""
     
     # Name
@@ -90,6 +97,13 @@ install_container() {
         echo -e "${RED}✗ Container with name '$container_name' already exists!${NC}"
         sleep 2
         return
+    fi
+    
+    # Hostname
+    read -p "$(echo -e ${CYAN}"Enter hostname (e.g., tasin-vps): "${NC})" container_hostname
+    if [ -z "$container_hostname" ]; then
+        container_hostname="$container_name"
+        echo -e "${DIM}  → Using container name as hostname: $container_hostname${NC}"
     fi
     
     # Port
@@ -118,9 +132,10 @@ install_container() {
     echo ""
     echo -e "${DIM}Creating container...${NC}"
     
-    # Run docker
+    # Run docker with custom hostname
     docker run -d \
         --name "$container_name" \
+        --hostname "$container_hostname" \
         -p "${container_port}:8080" \
         -e PASSWORD="$container_password" \
         --restart unless-stopped \
@@ -132,9 +147,11 @@ install_container() {
         echo -e "${GREEN}║${NC}           ${BOLD}${GREEN}✓ CONTAINER CREATED SUCCESSFULLY!${NC}              ${GREEN}║${NC}"
         echo -e "${GREEN}╠═══════════════════════════════════════════════════════════╣${NC}"
         echo -e "${GREEN}║${NC}  ${BOLD}Name:${NC}     ${YELLOW}$container_name${NC}"
+        echo -e "${GREEN}║${NC}  ${BOLD}Hostname:${NC} ${BLUE}$container_hostname${NC}"
         echo -e "${GREEN}║${NC}  ${BOLD}Port:${NC}     ${MAGENTA}$container_port${NC}"
         echo -e "${GREEN}║${NC}  ${BOLD}Password:${NC} ${CYAN}$container_password${NC}"
-        echo -e "${GREEN}║${NC}  ${BOLD}URL:${NC}      ${BLUE}http://YOUR_IP:$container_port${NC}"
+        echo -e "${GREEN}║${NC}  ${BOLD}URL:${NC}      ${WHITE}http://YOUR_IP:$container_port${NC}"
+        echo -e "${GREEN}║${NC}  ${BOLD}Terminal:${NC}  ${DIM}root@${container_hostname}${NC}"
         echo -e "${GREEN}╚═══════════════════════════════════════════════════════════╝${NC}"
     else
         echo -e "${RED}✗ Failed to create container! Check Docker logs.${NC}"
@@ -146,9 +163,9 @@ install_container() {
 
 # Uninstall container
 uninstall_container() {
-    echo -e "${BOLD}${YELLOW}════════════════════════════════════════${NC}"
-    echo -e "${BOLD}${RED}      🗑️  UNINSTALL VSCODE VPS${NC}"
-    echo -e "${BOLD}${YELLOW}════════════════════════════════════════${NC}"
+    echo -e "${BOLD}${YELLOW}══════════════════════════════════════════════════════${NC}"
+    echo -e "${BOLD}${RED}                🗑️  UNINSTALL VSCODE VPS${NC}"
+    echo -e "${BOLD}${YELLOW}══════════════════════════════════════════════════════${NC}"
     echo ""
     
     local containers=$(docker ps -a --filter "ancestor=ghcr.io/coder/code-server:latest" --format "{{.Names}}")
@@ -173,6 +190,14 @@ uninstall_container() {
     if ! docker ps -a --format "{{.Names}}" | grep -q "^${container_name}$"; then
         echo -e "${RED}✗ Container '$container_name' not found!${NC}"
         sleep 2
+        return
+    fi
+    
+    # Confirm
+    read -p "$(echo -e ${YELLOW}"Are you sure you want to delete '$container_name'? [y/N]: "${NC})" confirm
+    if [[ "$confirm" != [yY] ]]; then
+        echo -e "${DIM}Cancelled.${NC}"
+        sleep 1
         return
     fi
     
