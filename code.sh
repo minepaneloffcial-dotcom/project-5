@@ -8,7 +8,6 @@ BLUE='\033[0;34m'
 MAGENTA='\033[0;35m'
 CYAN='\033[0;36m'
 WHITE='\033[0;37m'
-BLACK='\033[0;30m'
 BRIGHT_RED='\033[1;31m'
 BRIGHT_GREEN='\033[1;32m'
 BRIGHT_YELLOW='\033[1;33m'
@@ -18,28 +17,7 @@ BRIGHT_CYAN='\033[1;36m'
 BRIGHT_WHITE='\033[1;37m'
 BOLD='\033[1m'
 DIM='\033[2m'
-UNDERLINE='\033[4m'
-BLINK='\033[5m'
-REVERSE='\033[7m'
 NC='\033[0m'
-
-# Gradient function
-gradient_text() {
-    local text="$1"
-    local colors=("$CYAN" "$BLUE" "$MAGENTA" "$RED" "$YELLOW" "$GREEN")
-    local len=${#text}
-    local result=""
-    for ((i=0; i<len; i++)); do
-        local color_index=$(( (i * ${#colors[@]} / len) % ${#colors[@]} ))
-        result+="${colors[$color_index]}${text:$i:1}"
-    done
-    echo -e "${result}${NC}"
-}
-
-# Box drawing characters
-TL="╔"; TR="╗"; BL="╚"; BR="╝"; H="═"; V="║"
-TL2="┌"; TR2="┐"; BL2="└"; BR2="┘"; H2="─"; V2="│"
-LT="╠"; RT="╣"; MT="╬"; MTL="├"; MTR="┤"; MTM="┼"
 
 # Banner
 show_banner() {
@@ -56,77 +34,6 @@ show_banner() {
     echo -e "${BRIGHT_YELLOW}    ┃${NC}  ${BRIGHT_CYAN}★${NC}  ${BRIGHT_WHITE}Welcome to iTzTasin69 VsCode VPS MAKER${NC}               ${BRIGHT_YELLOW}┃${NC}"
     echo -e "${BRIGHT_YELLOW}    ┃${NC}  ${DIM}Made with ❤️  by iTzTasin69${NC}                                  ${BRIGHT_YELLOW}┃${NC}"
     echo -e "${BRIGHT_YELLOW}    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
-    echo ""
-}
-
-# Spinner animation
-show_spinner() {
-    local pid=$1
-    local message="$2"
-    local spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
-    local i=0
-    tput civis
-    while kill -0 $pid 2>/dev/null; do
-        i=$(( (i+1) % ${#spin} ))
-        printf "\r${BRIGHT_CYAN}${spin:$i:1}${NC} ${message}"
-        sleep 0.1
-    done
-    tput cnorm
-    printf "\r${BRIGHT_GREEN}✔${NC} ${message}\n"
-}
-
-# Progress bar
-show_progress() {
-    local current=$1
-    local total=$2
-    local width=40
-    local percentage=$((current * 100 / total))
-    local filled=$((current * width / total))
-    local empty=$((width - filled))
-    
-    local bar=""
-    for ((i=0; i<filled; i++)); do bar+="█"; done
-    for ((i=0; i<empty; i++)); do bar+="░"; done
-    
-    printf "\r${BRIGHT_CYAN}[${BRIGHT_GREEN}%s${BRIGHT_CYAN}]${NC} ${BRIGHT_WHITE}%3d%%${NC}" "$bar" "$percentage"
-}
-
-# Typing effect
-type_text() {
-    local text="$1"
-    local color="$2"
-    local delay=0.03
-    for ((i=0; i<${#text}; i++)); do
-        printf "${color}%s${NC}" "${text:$i:1}"
-        sleep $delay
-    done
-    echo ""
-}
-
-# Success box
-success_box() {
-    local title="$1"
-    shift
-    echo ""
-    echo -e "${BRIGHT_GREEN}  ╭──────────────────────────────────────────────────────────╮${NC}"
-    echo -e "${BRIGHT_GREEN}  │${NC}  ${BRIGHT_WHITE}✔ ${BRIGHT_GREEN}${title}${NC}"
-    echo -e "${BRIGHT_GREEN}  ├──────────────────────────────────────────────────────────┤${NC}"
-    for item in "$@"; do
-        echo -e "${BRIGHT_GREEN}  │${NC}  ${DIM}${item}${NC}"
-    done
-    echo -e "${BRIGHT_GREEN}  ╰──────────────────────────────────────────────────────────╯${NC}"
-    echo ""
-}
-
-# Error box
-error_box() {
-    local msg="$1"
-    echo ""
-    echo -e "${BRIGHT_RED}  ╭──────────────────────────────────────────────────────────╮${NC}"
-    echo -e "${BRIGHT_RED}  │${NC}  ${BRIGHT_WHITE}✘ ${BRIGHT_RED}ERROR${NC}"
-    echo -e "${BRIGHT_RED}  ├──────────────────────────────────────────────────────────┤${NC}"
-    echo -e "${BRIGHT_RED}  │${NC}  ${RED}${msg}${NC}"
-    echo -e "${BRIGHT_RED}  ╰──────────────────────────────────────────────────────────╯${NC}"
     echo ""
 }
 
@@ -237,7 +144,12 @@ DOCKERFILE
         echo -e "  ${BRIGHT_GREEN}✔${NC} ${BRIGHT_WHITE}Image ready: ${BRIGHT_CYAN}code-server:$tag${NC}"
         return 0
     else
-        error_box "Failed to build ${os_name} ${os_ver} image!"
+        echo ""
+        echo -e "  ${BRIGHT_RED}╭──────────────────────────────────────────────────────╮${NC}"
+        echo -e "  ${BRIGHT_RED}│${NC}   ${BRIGHT_WHITE}✘ ERROR${NC}                                               ${BRIGHT_RED}│${NC}"
+        echo -e "  ${BRIGHT_RED}│${NC}   Failed to build ${os_name} ${os_ver} image!${NC}                 ${BRIGHT_RED}│${NC}"
+        echo -e "  ${BRIGHT_RED}╰──────────────────────────────────────────────────────╯${NC}"
+        echo ""
         return 1
     fi
 }
@@ -265,7 +177,8 @@ show_os_menu() {
     echo -e "  ${BRIGHT_CYAN}│${NC}   ${DIM}[0] ← Back to main menu${NC}                                  ${BRIGHT_CYAN}│${NC}"
     echo -e "  ${BRIGHT_CYAN}└───────────────────────────────────────────────────────────┘${NC}"
     echo ""
-    read -p "  ${BRIGHT_WHITE}┃${NC} ${BRIGHT_CYAN}Select OS${NC} ${DIM}[0-7]${NC}${BRIGHT_WHITE}:${NC} " os_choice
+    printf "  ${BRIGHT_WHITE}┃${NC} ${BRIGHT_CYAN}Select OS${NC} ${DIM}[0-7]${NC}${BRIGHT_WHITE}:${NC} "
+    read os_choice
     
     case $os_choice in
         0) return 1 ;;
@@ -338,7 +251,6 @@ install_container() {
     echo -e "  ${BRIGHT_YELLOW}╚══════════════════════════════════════════════════════════╝${NC}"
     echo ""
     
-    # OS Selection
     while true; do
         show_os_menu
         local os_result=$?
@@ -363,7 +275,8 @@ install_container() {
     
     # Name
     while true; do
-        read -p "  ${BRIGHT_CYAN}┃${NC} ${BRIGHT_WHITE}Container Name${NC}    ${DIM}[auto: vscode-]${NC}${BRIGHT_WHITE}:${NC} " container_name
+        printf "  ${BRIGHT_CYAN}┃${NC} ${BRIGHT_WHITE}Container Name${NC}    ${DIM}[auto: vscode-]${NC}${BRIGHT_WHITE}:${NC} "
+        read container_name
         if [ -z "$container_name" ]; then
             echo -e "  ${BRIGHT_RED}┃${NC}  ${RED}Name cannot be empty!${NC}"
             continue
@@ -378,12 +291,14 @@ install_container() {
     done
     
     # Hostname
-    read -p "  ${BRIGHT_CYAN}┃${NC} ${BRIGHT_WHITE}Hostname${NC}          ${DIM}[default: ${container_name#vscode-}]${NC}${BRIGHT_WHITE}:${NC} " container_hostname
+    printf "  ${BRIGHT_CYAN}┃${NC} ${BRIGHT_WHITE}Hostname${NC}          ${DIM}[default: ${container_name#vscode-}]${NC}${BRIGHT_WHITE}:${NC} "
+    read container_hostname
     [ -z "$container_hostname" ] && container_hostname="${container_name#vscode-}"
     
     # Port
     while true; do
-        read -p "  ${BRIGHT_CYAN}┃${NC} ${BRIGHT_WHITE}Port${NC}              ${DIM}[e.g., 8080]${NC}${BRIGHT_WHITE}:${NC} " container_port
+        printf "  ${BRIGHT_CYAN}┃${NC} ${BRIGHT_WHITE}Port${NC}              ${DIM}[e.g., 8080]${NC}${BRIGHT_WHITE}:${NC} "
+        read container_port
         if [ -z "$container_port" ]; then
             echo -e "  ${BRIGHT_RED}┃${NC}  ${RED}Port cannot be empty!${NC}"
             continue
@@ -397,7 +312,8 @@ install_container() {
     
     # Password
     while true; do
-        read -p "  ${BRIGHT_CYAN}┃${NC} ${BRIGHT_WHITE}Password${NC}          ${DIM}[login password]${NC}${BRIGHT_WHITE}:${NC} " container_password
+        printf "  ${BRIGHT_CYAN}┃${NC} ${BRIGHT_WHITE}Password${NC}          ${DIM}[login password]${NC}${BRIGHT_WHITE}:${NC} "
+        read container_password
         if [ -z "$container_password" ]; then
             echo -e "  ${BRIGHT_RED}┃${NC}  ${RED}Password cannot be empty!${NC}"
             continue
@@ -410,10 +326,9 @@ install_container() {
     echo -e "  ${BRIGHT_CYAN}┃${NC}  ${BRIGHT_WHITE}BUILDING${NC}"
     echo -e "  ${DIM}─────────────────────────────────────────────────────────${NC}"
     
-    # Build image
     if ! build_os_image "$os_choice_selected"; then
-        echo ""
-        read -p "  ${DIM}Press Enter to continue...${NC}"
+        printf "  ${DIM}Press Enter to continue...${NC} "
+        read
         return
     fi
     
@@ -422,7 +337,6 @@ install_container() {
     echo -e "  ${BRIGHT_CYAN}┃${NC}  ${BRIGHT_WHITE}DEPLOYING${NC}"
     echo -e "  ${DIM}─────────────────────────────────────────────────────────${NC}"
     
-    # Create container in background
     (
         docker run -d \
             --name "$container_name" \
@@ -467,34 +381,49 @@ install_container() {
         echo -e "  ${BRIGHT_GREEN}║${NC}                                                              ${BRIGHT_GREEN}║${NC}"
         echo -e "  ${BRIGHT_GREEN}╚══════════════════════════════════════════════════════════╝${NC}"
     else
-        error_box "Failed to create container! Run: docker logs $container_name"
+        echo ""
+        echo -e "  ${BRIGHT_RED}╭──────────────────────────────────────────────────────╮${NC}"
+        echo -e "  ${BRIGHT_RED}│${NC}   ${BRIGHT_WHITE}✘ ERROR${NC}                                               ${BRIGHT_RED}│${NC}"
+        echo -e "  ${BRIGHT_RED}│${NC}   Failed to create container!${NC}                             ${BRIGHT_RED}│${NC}"
+        echo -e "  ${BRIGHT_RED}│${NC}   ${DIM}Run: docker logs $container_name${NC}                       ${BRIGHT_RED}│${NC}"
+        echo -e "  ${BRIGHT_RED}╰──────────────────────────────────────────────────────╯${NC}"
+        echo ""
     fi
     
-    echo ""
-    read -p "  ${DIM}Press Enter to continue...${NC}"
+    printf "  ${DIM}Press Enter to continue...${NC} "
+    read
 }
 
 # Uninstall container
 uninstall_container() {
     echo -e "  ${BRIGHT_RED}╔══════════════════════════════════════════════════════════╗${NC}"
-    echo -e "  ${BRIGHT_RED}║${NC}  ${BRIGHT_WHITE}🗑️${NC}  ${BRIGHT_WHITE}UNINSTALL VSCODE VPS${NC}                              ${BRIGHT_RED}║${NC}"
+    echo -e "  ${BRIGHT_RED}║${NC}  ${BRIGHT_WHITE}🗑️  UNINSTALL VSCODE VPS${NC}                              ${BRIGHT_RED}║${NC}"
     echo -e "  ${BRIGHT_RED}╚══════════════════════════════════════════════════════════╝${NC}"
     echo ""
     
     local containers=$(docker ps -a --filter "name=vscode-" --format "{{.Names}}")
     
     if [ -z "$containers" ]; then
-        error_box "No containers found to uninstall!"
+        echo -e "  ${BRIGHT_RED}╭──────────────────────────────────────────────────────╮${NC}"
+        echo -e "  ${BRIGHT_RED}│${NC}   ${BRIGHT_WHITE}✘ ERROR${NC}                                               ${BRIGHT_RED}│${NC}"
+        echo -e "  ${BRIGHT_RED}│${NC}   No containers found to uninstall!${NC}                      ${BRIGHT_RED}│${NC}"
+        echo -e "  ${BRIGHT_RED}╰──────────────────────────────────────────────────────╯${NC}"
+        echo ""
         sleep 2
         return
     fi
     
     list_containers
     
-    read -p "  ${BRIGHT_RED}┃${NC} ${BRIGHT_WHITE}Container name to delete${NC}${BRIGHT_WHITE}:${NC} " container_name
+    printf "  ${BRIGHT_RED}┃${NC} ${BRIGHT_WHITE}Container name to delete${NC}${BRIGHT_WHITE}:${NC} "
+    read container_name
     
     if [ -z "$container_name" ]; then
-        error_box "Name cannot be empty!"
+        echo -e "  ${BRIGHT_RED}╭──────────────────────────────────────────────────────╮${NC}"
+        echo -e "  ${BRIGHT_RED}│${NC}   ${BRIGHT_WHITE}✘ ERROR${NC}                                               ${BRIGHT_RED}│${NC}"
+        echo -e "  ${BRIGHT_RED}│${NC}   Name cannot be empty!${NC}                                  ${BRIGHT_RED}│${NC}"
+        echo -e "  ${BRIGHT_RED}╰──────────────────────────────────────────────────────╯${NC}"
+        echo ""
         sleep 2
         return
     fi
@@ -502,13 +431,18 @@ uninstall_container() {
     [[ ! "$container_name" =~ ^vscode- ]] && container_name="vscode-${container_name}"
     
     if ! docker ps -a --format "{{.Names}}" | grep -q "^${container_name}$"; then
-        error_box "Container '$container_name' not found!"
+        echo -e "  ${BRIGHT_RED}╭──────────────────────────────────────────────────────╮${NC}"
+        echo -e "  ${BRIGHT_RED}│${NC}   ${BRIGHT_WHITE}✘ ERROR${NC}                                               ${BRIGHT_RED}│${NC}"
+        echo -e "  ${BRIGHT_RED}│${NC}   Container '${BRIGHT_WHITE}${container_name}${BRIGHT_RED}' not found!${NC}                   ${BRIGHT_RED}│${NC}"
+        echo -e "  ${BRIGHT_RED}╰──────────────────────────────────────────────────────╯${NC}"
+        echo ""
         sleep 2
         return
     fi
     
     echo ""
-    read -p "  ${BRIGHT_YELLOW}┃${NC} ${BRIGHT_WHITE}Confirm delete '${BRIGHT_RED}${container_name}${BRIGHT_WHITE}'?${NC} ${DIM}[y/N]${NC}${BRIGHT_WHITE}:${NC} " confirm
+    printf "  ${BRIGHT_YELLOW}┃${NC} ${BRIGHT_WHITE}Confirm delete '${BRIGHT_RED}${container_name}${BRIGHT_WHITE}'?${NC} ${DIM}[y/N]${NC}${BRIGHT_WHITE}:${NC} "
+    read confirm
     if [[ "$confirm" != [yY] ]]; then
         echo -e "  ${DIM}Cancelled.${NC}"
         sleep 1
@@ -539,13 +473,24 @@ uninstall_container() {
     
     if [ "$rm_status" = "0" ]; then
         printf "\r  ${BRIGHT_GREEN}✔${NC} ${DIM}Container deleted${NC}                              \n"
-        success_box "Container deleted" "Name: $container_name"
+        echo ""
+        echo -e "  ${BRIGHT_GREEN}╭──────────────────────────────────────────────────────╮${NC}"
+        echo -e "  ${BRIGHT_GREEN}│${NC}   ${BRIGHT_WHITE}✔ Container deleted successfully${NC}                       ${BRIGHT_GREEN}│${NC}"
+        echo -e "  ${BRIGHT_GREEN}│${NC}   ${DIM}Name: ${container_name}${NC}                                   ${BRIGHT_GREEN}│${NC}"
+        echo -e "  ${BRIGHT_GREEN}╰──────────────────────────────────────────────────────╯${NC}"
+        echo ""
     else
         printf "\r  ${BRIGHT_RED}✘${NC} ${DIM}Failed to delete${NC}                              \n"
-        error_box "Failed to delete container!"
+        echo ""
+        echo -e "  ${BRIGHT_RED}╭──────────────────────────────────────────────────────╮${NC}"
+        echo -e "  ${BRIGHT_RED}│${NC}   ${BRIGHT_WHITE}✘ ERROR${NC}                                               ${BRIGHT_RED}│${NC}"
+        echo -e "  ${BRIGHT_RED}│${NC}   Failed to delete container!${NC}                             ${BRIGHT_RED}│${NC}"
+        echo -e "  ${BRIGHT_RED}╰──────────────────────────────────────────────────────╯${NC}"
+        echo ""
     fi
     
-    read -p "  ${DIM}Press Enter to continue...${NC}"
+    printf "  ${DIM}Press Enter to continue...${NC} "
+    read
 }
 
 # Clean images
@@ -560,7 +505,8 @@ clean_images() {
     if [ -z "$images" ]; then
         echo -e "  ${DIM}No custom OS images found.${NC}"
         echo ""
-        read -p "  ${DIM}Press Enter to continue...${NC}"
+        printf "  ${DIM}Press Enter to continue...${NC} "
+        read
         return
     fi
     
@@ -573,7 +519,8 @@ clean_images() {
     echo -e "  ${BRIGHT_CYAN}└─────────────────────────────────────────────────────────┘${NC}"
     echo ""
     
-    read -p "  ${BRIGHT_RED}┃${NC} ${BRIGHT_WHITE}Delete ALL cached images?${NC} ${DIM}[y/N]${NC}${BRIGHT_WHITE}:${NC} " confirm
+    printf "  ${BRIGHT_RED}┃${NC} ${BRIGHT_WHITE}Delete ALL cached images?${NC} ${DIM}[y/N]${NC}${BRIGHT_WHITE}:${NC} "
+    read confirm
     if [[ "$confirm" != [yY] ]]; then
         echo -e "  ${DIM}Cancelled.${NC}"
         sleep 1
@@ -584,7 +531,8 @@ clean_images() {
     echo -e "  ${BRIGHT_GREEN}✔${NC} ${BRIGHT_WHITE}All cached OS images deleted!${NC}"
     
     echo ""
-    read -p "  ${DIM}Press Enter to continue...${NC}"
+    printf "  ${DIM}Press Enter to continue...${NC} "
+    read
 }
 
 # Main menu
@@ -607,14 +555,16 @@ show_menu() {
     echo -e "  ${BRIGHT_MAGENTA}┃${NC}   ${BRIGHT_GREEN}●${NC} ${DIM}Running:${NC} ${BRIGHT_GREEN}${running}${NC}   ${BRIGHT_RED}●${NC} ${DIM}Stopped:${NC} ${BRIGHT_RED}${stopped}${NC}   ${BRIGHT_WHITE}Total:${NC} ${BRIGHT_YELLOW}${total}${NC}                  ${BRIGHT_MAGENTA}┃${NC}"
     echo -e "  ${BRIGHT_MAGENTA}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
     echo ""
-    read -p "  ${BRIGHT_WHITE}┃${NC} ${BRIGHT_CYAN}Select option${NC} ${DIM}[1-5]${NC}${BRIGHT_WHITE}:${NC} " choice
+    printf "  ${BRIGHT_WHITE}┃${NC} ${BRIGHT_CYAN}Select option${NC} ${DIM}[1-5]${NC}${BRIGHT_WHITE}:${NC} "
+    read choice
     
     case $choice in
         1) install_container ;;
         2) uninstall_container ;;
-        3) 
+        3)
             list_containers
-            read -p "  ${DIM}Press Enter to continue...${NC}"
+            printf "  ${DIM}Press Enter to continue...${NC} "
+            read
             ;;
         4) clean_images ;;
         5)
