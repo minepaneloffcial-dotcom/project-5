@@ -110,27 +110,27 @@ FROM __BASE_IMAGE__
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get upgrade -y && apt-get install -y curl sudo wget git nano vim htop net-tools lsof unzip neofetch && rm -rf /var/lib/apt/lists/*
 RUN curl -fsSL https://code-server.dev/install.sh | sh
-RUN mkdir -p /root/.local/share/code-server /root/.config/neofetch
+RUN mkdir -p /root/.local/share/code-server
 
-RUN echo '#!/bin/bash' > /entrypoint.sh && \
-    echo 'mkdir -p /root/.config/neofetch' >> /entrypoint.sh && \
-    echo 'if [ -n "$CUSTOM_CPU" ]; then' >> /entrypoint.sh && \
-    echo '  echo "info \"CPU\" \"${CUSTOM_CPU}\"" > /root/.config/neofetch/config.conf' >> /entrypoint.sh && \
-    echo 'fi' >> /entrypoint.sh && \
-    echo 'if [ -n "$CUSTOM_GPU" ]; then' >> /entrypoint.sh && \
-    echo '  echo "info \"GPU\" \"${CUSTOM_GPU}\"" >> /root/.config/neofetch/config.conf' >> /entrypoint.sh && \
-    echo 'fi' >> /entrypoint.sh && \
-    echo 'if [ -n "$CUSTOM_MEM" ]; then' >> /entrypoint.sh && \
-    echo '  echo "info \"Memory\" \"${CUSTOM_MEM}\"" >> /root/.config/neofetch/config.conf' >> /entrypoint.sh && \
-    echo 'fi' >> /entrypoint.sh && \
-    echo 'exec code-server --bind-addr 0.0.0.0:8080 --auth password "$@"' >> /entrypoint.sh && \
-    chmod +x /entrypoint.sh
+# Inject real-looking custom functions into .bashrc
+RUN echo 'if [ -n "$CUSTOM_CPU" ]; then' >> /root/.bashrc && \
+    echo '    get_cpu() { printf "%s" "$CUSTOM_CPU"; }' >> /root/.bashrc && \
+    echo 'fi' >> /root/.bashrc && \
+    echo 'if [ -n "$CUSTOM_GPU" ]; then' >> /root/.bashrc && \
+    echo '    get_gpu() { printf "%s" "$CUSTOM_GPU"; }' >> /root/.bashrc && \
+    echo 'fi' >> /root/.bashrc && \
+    echo 'if [ -n "$CUSTOM_HOST" ]; then' >> /root/.bashrc && \
+    echo '    get_host() { printf "%s" "$CUSTOM_HOST"; }' >> /root/.bashrc && \
+    echo 'fi' >> /root/.bashrc && \
+    echo 'if [ -n "$CUSTOM_MEM" ]; then' >> /root/.bashrc && \
+    echo '    get_memory() { printf "%s" "$CUSTOM_MEM"; }' >> /root/.bashrc && \
+    echo 'fi' >> /root/.bashrc && \
+    echo 'neofetch' >> /root/.bashrc
 
-RUN echo 'neofetch' >> /root/.bashrc
 ENV PASSWORD=changeit
 EXPOSE 8080
 WORKDIR /root
-ENTRYPOINT ["/entrypoint.sh"]
+CMD ["code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "password"]
 DOCKERFILE_END
     
     sed -i "s|__BASE_IMAGE__|${base_image}|g" /tmp/vscode-dockerfile-$tag
@@ -306,11 +306,15 @@ install_container() {
     
     echo ""
     echo -e "  ${DIM}─────────────────────────────────────────────────────────${NC}"
-    echo -e "  ${BRIGHT_CYAN}┃${NC}  ${BRIGHT_WHITE}NEOFETCH CUSTOM INFO${NC}  ${DIM}(what neofetch shows)${NC}"
+    echo -e "  ${BRIGHT_CYAN}┃${NC}  ${BRIGHT_WHITE}NEOFETCH CUSTOM INFO${NC}  ${DIM}(leave blank for real hardware)${NC}"
     echo -e "  ${DIM}─────────────────────────────────────────────────────────${NC}"
     echo ""
     
-    printf "  ${BRIGHT_CYAN}┃${NC} ${BRIGHT_WHITE}CPU Model${NC}        ${DIM}[e.g., AMD Ryzen 9 7950X]${NC}${BRIGHT_WHITE}:${NC} "
+    printf "  ${BRIGHT_CYAN}┃${NC} ${BRIGHT_WHITE}Host${NC}             ${DIM}[e.g., MinePanel Pvt. Ltd.]${NC}${BRIGHT_WHITE}:${NC} "
+    read custom_host
+    [ -z "$custom_host" ] && custom_host=""
+    
+    printf "  ${BRIGHT_CYAN}┃${NC} ${BRIGHT_WHITE}CPU Model${NC}        ${DIM}[e.g., AMD Ryzen 9 7950X (16) @ 5.7GHz]${NC}${BRIGHT_WHITE}:${NC} "
     read custom_cpu
     [ -z "$custom_cpu" ] && custom_cpu=""
     
@@ -375,6 +379,9 @@ install_container() {
     if [ -n "$custom_gpu" ]; then
         env_args="${env_args} -e CUSTOM_GPU=\"${custom_gpu}\""
     fi
+    if [ -n "$custom_host" ]; then
+        env_args="${env_args} -e CUSTOM_HOST=\"${custom_host}\""
+    fi
     if [ -n "$custom_mem" ]; then
         env_args="${env_args} -e CUSTOM_MEM=\"${custom_mem}\""
     fi
@@ -408,6 +415,9 @@ install_container() {
         echo -e "  ${BRIGHT_GREEN}║${NC}   ${BRIGHT_WHITE}Name${NC}     ${DIM}┃${NC}  ${BRIGHT_YELLOW}${container_name}${NC}"
         echo -e "  ${BRIGHT_GREEN}║${NC}   ${BRIGHT_WHITE}OS${NC}       ${DIM}┃${NC}  ${os_icon} ${os_name} ${os_ver}${NC}"
         echo -e "  ${BRIGHT_GREEN}║${NC}   ${BRIGHT_WHITE}Hostname${NC}  ${DIM}┃${NC}  ${BRIGHT_BLUE}${container_hostname}${NC}"
+        if [ -n "$custom_host" ]; then
+            echo -e "  ${BRIGHT_GREEN}║${NC}   ${BRIGHT_WHITE}Host${NC}     ${DIM}┃${NC}  ${BRIGHT_WHITE}${custom_host}${NC}"
+        fi
         if [ -n "$custom_cpu" ]; then
             echo -e "  ${BRIGHT_GREEN}║${NC}   ${BRIGHT_WHITE}CPU${NC}      ${DIM}┃${NC}  ${BRIGHT_CYAN}${custom_cpu}${NC}"
         fi
